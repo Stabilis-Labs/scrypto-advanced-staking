@@ -1,7 +1,7 @@
-## USE OF BLUEPRINT
+## GOAL
 Distribute a specific token as a reward for staking tokens of the admin's choosing every chosen interval.
 
-## BASIC WORKING OF BLUEPRINT
+## IMPLEMENTATION
 
 Instantiation creates a staking component, which distributes a specific token as a reward for staking tokens of the admin's choosing every chosen interval.
 
