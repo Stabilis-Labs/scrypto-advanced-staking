@@ -40,7 +40,6 @@ mod staking {
             update_id => PUBLIC;
             set_period_interval => restrict_to: [OWNER];
             set_rewards => restrict_to: [OWNER];
-            set_max_vector_length => restrict_to: [OWNER];
             set_max_claim_delay => restrict_to: [OWNER];
             update_period => restrict_to: [OWNER];
             fill_rewards => restrict_to: [OWNER];
@@ -62,7 +61,6 @@ mod staking {
         id_manager: ResourceManager,
         id_counter: u64,
         reward_vault: FungibleVault,
-        max_vector_length: usize,
         stakes: KeyValueStore<ResourceAddress, StakableUnit>,
         stakables: Vec<ResourceAddress>,
     }
@@ -160,7 +158,6 @@ mod staking {
                 unstake_receipt_counter: 0,
                 id_counter: 0,
                 reward_vault: FungibleVault::with_bucket(rewards.as_fungible()),
-                max_vector_length: 100usize,
                 stakes: KeyValueStore::new(),
                 stakables: vec![],
             }
@@ -405,10 +402,6 @@ mod staking {
 
         pub fn set_max_claim_delay(&mut self, new_delay: i64) {
             self.max_claim_delay = new_delay;
-        }
-
-        pub fn set_max_vector_length(&mut self, new_length: u64) {
-            self.max_vector_length = new_length.to_usize().unwrap();
         }
 
         pub fn set_unstake_delay(&mut self, new_delay: i64) {
