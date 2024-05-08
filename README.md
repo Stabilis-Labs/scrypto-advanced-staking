@@ -2,3 +2,5 @@ This repository contains a package that enables staking of any fungible token, w
 Rewards are given out periodically.
 
 More documentation will follow.
+
+No testing or comments are currently present.
