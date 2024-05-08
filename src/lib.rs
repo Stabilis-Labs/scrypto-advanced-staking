@@ -33,7 +33,7 @@ pub struct StakableUnit {
 mod staking {
     enable_method_auth! {
         methods {
-            create_stab_id => PUBLIC;
+            create_id => PUBLIC;
             stake => PUBLIC;
             start_unstake => PUBLIC;
             finish_unstake => PUBLIC;
@@ -297,7 +297,7 @@ mod staking {
                 .take(receipt_data.amount)
         }
 
-        pub fn create_stab_id(&mut self) -> Bucket {
+        pub fn create_id(&mut self) -> Bucket {
             self.id_counter += 1;
 
             let id_data = Id {
