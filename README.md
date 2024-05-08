@@ -5,7 +5,7 @@ Distribute a specific token as a reward for staking tokens of the admin's choosi
 
 Instantiation creates a staking component, which distributes a specific token as a reward for staking tokens of the admin's choosing every chosen interval.
 
-The admin can call a method to add stakables to the component, and choose how much rewards to hand out every period.
+The admin can call a method to add stakables to the component, and choose how many rewards to hand out every period.
 
 The user can generate a soulbound id (nft) which records how much of every resource they have staked and when they have last claimed their staking rewards.
 
