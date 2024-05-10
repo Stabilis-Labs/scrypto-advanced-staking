@@ -723,11 +723,15 @@ mod staking {
         // - none
         //
         // ## LOGIC
+        // - the method updates the period if necessary, so the next period and rewwards are always up to date
         // - the method checks the staking ID
         // - the method checks the stakables
         // - the method adds new indexes if necessary
 
-        fn check_indexes(&self, id: &NonFungibleLocalId) {
+        fn check_indexes(&mut self, id: &NonFungibleLocalId) {
+            if Clock::current_time_is_at_or_after(self.next_period, TimePrecision::Minute) {
+                self.update_period();
+            }
             let id_data: Id = self.id_manager.get_non_fungible_data(id);
             let mut staked_vector: Vec<Decimal> = id_data.amounts_staked.clone();
             let mut locked_vector: Vec<Option<Instant>> = id_data.locked_until.clone();
