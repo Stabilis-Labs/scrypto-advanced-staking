@@ -1,6 +1,7 @@
 ## Overview
 This blueprint enables advanced staking of resources. Staking rewards are distributed periodically.
 
+### Advantages
 The 3 main advantages over simple OneResourcePool staking that are accomplished are:
 - Staking reward can be a token different from the staked token.
 - Staked tokens can be locked (e.g. for voting or to reward not selling).
@@ -11,12 +12,23 @@ To accomplish this, users now stake their tokens to a staking ID. The staked tok
 - The component can easily lock these tokens.
 - Unstaking is done by requesting an unstaking receipt, which can be redeemed through the component after a set delay, providing an unstaking delay.
 
+### Disadvantages
 This NFT staking ID approach has some disadvantages over simple OneResourcePool staking:
 - Wallet display of staked tokens is more difficult, as staked amounts are stored by an NFT (staking ID). Ideally, users need to use some kind of front-end to see their staked tokens.
 - Staking rewards are distributed periodically, not continuously.
 - User needs to claim rewards manually. Though this could be automated in some way.
 - Staked tokens are not liquid, making it impossible to use them in traditional DEXes. Though they are transferable to other user's staking IDs, so a DEX could be built on top of this system. This way, liquidity could be provided while still earning staking fees.
 - It is more complex to set up and manage.
+
+## Implementation
+Within the lib.rs file, you will find all methods with accompanying comments.
+
+To make it easier to understand, here is a general overview of the blueprint's working:
+The instantiator of the staking component can add stakable tokens, and set rewards for staking them, or locking them. This information is stored within the staking component.
+All staking revolves around the Staking ID. A user can create a staking ID at any time. The ID contains a list of the amount of token a user has staked. A user can stake tokens to it by presenting their ID.
+The staking component records how many tokens are staked in total for all stakable tokens. When a period ends, it calculates how many tokens should be rewarded per staked stakable token for that period. It does this by dividing the total period reward by the total amount staked.
+A user can then come back and claim their staking rewards for the periods that have passed since they have last done so. To do this, they present their staking ID.
+Providing the tokens aren't locked, unstaking is done by again presenting the staking ID. This results in an unstaking receipt, which can, after the unstaking delay has passed, be redeemed for the unstaked tokens.
 
 ## License
 
