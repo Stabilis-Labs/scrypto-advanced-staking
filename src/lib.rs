@@ -45,7 +45,7 @@ pub struct Id {
     pub locked_until: Vec<Option<Instant>>,
 }
 
-// Lock structure, holding the information about locking options of a token
+// Lock structure, holding the information about locking options of a token.
 #[derive(ScryptoSbor)]
 pub struct Lock {
     pub payment: Decimal,
