@@ -80,6 +80,7 @@ mod staking {
             finish_unstake => PUBLIC;
             update_id => PUBLIC;
             update_period => PUBLIC;
+            lock_stake => PUBLIC;
             set_lock => restrict_to: [OWNER];
             set_period_interval => restrict_to: [OWNER];
             set_rewards => restrict_to: [OWNER];
@@ -87,6 +88,7 @@ mod staking {
             fill_rewards => restrict_to: [OWNER];
             remove_rewards => restrict_to: [OWNER];
             add_stakable => restrict_to: [OWNER];
+            edit_stakable => restrict_to: [OWNER];
             set_next_period_to_now => restrict_to: [OWNER];
             set_unstake_delay => restrict_to: [OWNER];
         }
@@ -102,7 +104,7 @@ mod staking {
         // maximum amount of weeks rewards are stored for a user, after which they become unclaimable
         max_claim_delay: i64,
         // resource manager of the stake transfer receipts
-        stake_transfer_receipt_manager: ResourceManager
+        stake_transfer_receipt_manager: ResourceManager,
         // counter for the stake transfer receipts
         stake_transfer_receipt_counter: u64,
         // resource manager of the unstake receipts
@@ -151,7 +153,7 @@ mod staking {
             name: String,
             symbol: String,
             dao_controlled: bool,
-        ) -> (Global<Staking>, ResourceManager, ResourceManager) {
+        ) -> Global<Staking> {
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(Staking::blueprint_id());
 
@@ -160,9 +162,9 @@ mod staking {
             ))
             .metadata(metadata!(
                 init {
-                    "name" => &format!("{} Staking ID", name), updatable;
-                    "symbol" => &format!("id{}", symbol), updatable;
-                    "description" => &format!("An ID recording your stake in the {} ecosystem.", name), updatable;
+                    "name" => format!("{} Staking ID", name), updatable;
+                    "symbol" => format!("id{}", symbol), updatable;
+                    "description" => format!("An ID recording your stake in the {} ecosystem.", name), updatable;
                 }
             ))
             .mint_roles(mint_roles!(
@@ -196,9 +198,9 @@ mod staking {
             )
             .metadata(metadata!(
                 init {
-                    "name" => &format!("{} Stake Transfer Receipt", name), updatable;
-                    "symbol" => &format!("staketr{}", symbol), updatable;
-                    "description" => &format!("An stake transfer receipt used in the {} ecosystem.", name), updatable;
+                    "name" => format!("{} Stake Transfer Receipt", name), updatable;
+                    "symbol" => format!("staketr{}", symbol), updatable;
+                    "description" => format!("An stake transfer receipt used in the {} ecosystem.", name), updatable;
                 }
             ))            
             .mint_roles(mint_roles!(
@@ -217,9 +219,9 @@ mod staking {
                 ))
                 .metadata(metadata!(
                     init {
-                        "name" => &format!("{} Unstake Receipt", name), updatable;
-                        "symbol" => &format!("unstake{}", symbol), updatable;
-                        "description" => &format!("An unstake receipt used in the {} ecosystem.", name), updatable;
+                        "name" => format!("{} Unstake Receipt", name), updatable;
+                        "symbol" => format!("unstake{}", symbol), updatable;
+                        "description" => format!("An unstake receipt used in the {} ecosystem.", name), updatable;
                     }
                 ))   
                 .mint_roles(mint_roles!(
@@ -253,6 +255,7 @@ mod staking {
                 reward_vault: FungibleVault::with_bucket(rewards.as_fungible()),
                 stakes: KeyValueStore::new(),
                 stakables: vec![],
+                dao_controlled,
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::Fixed(rule!(require(controller))))
@@ -416,8 +419,6 @@ mod staking {
         pub fn finish_unstake(&mut self, receipt: Bucket) -> Bucket {
             assert!(receipt.resource_address() == self.unstake_receipt_manager.address());
 
-            let receipt_id: NonFungibleLocalId = receipt.as_non_fungible().non_fungible_local_id();
-
             let receipt_data = receipt
                 .as_non_fungible()
                 .non_fungible::<UnstakeReceipt>()
@@ -521,12 +522,12 @@ mod staking {
 
             staked_vector[index] += stake_amount;
 
-            self.stabilis_id_manager
+            self.id_manager
                 .update_non_fungible_data(&id, "amounts_staked", staked_vector);
 
             self.stakes.get_mut(&address).unwrap().staked_amount += stake_amount;
 
-            self.stabilis_id_manager.update_non_fungible_data(
+            self.id_manager.update_non_fungible_data(
                 &id,
                 "next_period",
                 self.current_period + 1,
@@ -627,7 +628,7 @@ mod staking {
             self.id_manager
                 .update_non_fungible_data(&id, "locked_until", locked_vector);
 
-            self.reward_vault.take(stakable.lock.payment);
+            self.reward_vault.take(stakable.lock.payment * staked_amount).into()
         }
 
         //////////////////////////////////////////////////////////////////////
@@ -675,7 +676,7 @@ mod staking {
         }
 
         pub fn edit_stakable(&mut self, address: ResourceAddress, reward_amount: Decimal, lock: Lock) {
-            let stakable = self.stakes.get_mut(&address).unwrap();
+            let mut stakable = self.stakes.get_mut(&address).unwrap();
             stakable.reward_amount = reward_amount;
             stakable.lock = lock;
         }
@@ -729,7 +730,7 @@ mod staking {
         fn check_indexes(&self, id: &NonFungibleLocalId) {
             let id_data: Id = self.id_manager.get_non_fungible_data(id);
             let mut staked_vector: Vec<Decimal> = id_data.amounts_staked.clone();
-            let mut locked_vector: Vec<(Option<Instant>, Option<Instant>)> = id_data.locked_until.clone();
+            let mut locked_vector: Vec<Option<Instant>> = id_data.locked_until.clone();
 
             if staked_vector.len() != self.stakables.len() {
                 let to_add_items = self.stakables.len() - staked_vector.len();
