@@ -33,7 +33,7 @@ The staking component records how many tokens are staked in total for all stakab
 
 A user can then come back and claim their staking rewards for the periods that have passed since they have last done so. To do this, they present their staking ID.
 
-Providing the tokens aren't locked, unstaking is done by again presenting the staking ID. This results in an unstaking receipt, which can, after the unstaking delay has passed, be redeemed for the unstaked tokens.
+Provided the tokens aren't locked, unstaking is done by again presenting the staking ID. This results in an unstaking receipt, which can, after the unstaking delay has passed, be redeemed for the unstaked tokens.
 
 ## License
 
