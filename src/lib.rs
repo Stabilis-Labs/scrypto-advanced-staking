@@ -103,6 +103,8 @@ mod staking {
         current_period: i64,
         // maximum amount of weeks rewards are stored for a user, after which they become unclaimable
         max_claim_delay: i64,
+        // maximum unstaking delay the admin can set
+        max_unstaking_delay: i64,
         // resource manager of the stake transfer receipts
         stake_transfer_receipt_manager: ResourceManager,
         // counter for the stake transfer receipts
@@ -153,6 +155,7 @@ mod staking {
             name: String,
             symbol: String,
             dao_controlled: bool,
+            max_unstaking_delay: i64,
         ) -> Global<Staking> {
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(Staking::blueprint_id());
@@ -245,6 +248,7 @@ mod staking {
                 period_interval,
                 current_period: 0,
                 max_claim_delay: 5,
+                max_unstaking_delay,
                 unstake_delay: 7,
                 id_manager,
                 stake_transfer_receipt_manager,
@@ -361,13 +365,14 @@ mod staking {
                 );
             }
 
-            let amount: Decimal = match unstake_all {
+            let mut amount: Decimal = match unstake_all {
                 true => staked_vector[index],
                 false => unstake_amount,
             };
 
             if amount >= staked_vector[index] {
                 self.stakes.get_mut(&address).unwrap().staked_amount -= staked_vector[index];
+                amount = staked_vector[index];
                 staked_vector[index] = dec!(0);
             } else {
                 self.stakes.get_mut(&address).unwrap().staked_amount -= amount;
@@ -652,6 +657,7 @@ mod staking {
         }
 
         pub fn set_unstake_delay(&mut self, new_delay: i64) {
+            assert!(new_delay <= self.max_unstaking_delay, "Unstaking delay cannot be longer than the maximum unstaking delay.");
             self.unstake_delay = new_delay;
         }
 
