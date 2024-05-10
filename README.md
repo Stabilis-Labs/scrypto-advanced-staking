@@ -1,20 +1,47 @@
-## GOAL
-Distribute a specific token as a reward for staking tokens of the admin's choosing every chosen interval.
+## Overview
+This blueprint enables advanced staking of resources. Staking rewards are distributed periodically.
 
-## IMPLEMENTATION
+The 3 main advantages over simple OneResourcePool staking that are accomplished are:
+- Staking reward can be a token different from the staked token.
+- Staked tokens can be locked (e.g. for voting or to reward not selling).
+- An unstaking delay can be set (is technically also possible using the OneResourcePool).
 
-Instantiation creates a staking component, which distributes a specific token as a reward for staking tokens of the admin's choosing every chosen interval.
+To accomplish this, users now stake their tokens to a staking ID. The staked tokens are then held by the staking component:
+- Rewards are claimed through the component, which can distribute any token as a reward.
+- The component can easily lock these tokens.
+- Unstaking is done by requesting an unstaking receipt, which can be redeemed through the component after a set delay, providing an unstaking delay.
 
-The admin can call a method to add stakables to the component, and choose how many rewards to hand out every period.
+This NFT staking ID approach has some disadvantages over simple OneResourcePool staking:
+- Wallet display of staked tokens is more difficult, as staked amounts are stored by an NFT (staking ID). Ideally, users need to use some kind of front-end to see their staked tokens.
+- Staking rewards are distributed periodically, not continuously.
+- User needs to claim rewards manually. Though this could be automated in some way.
+- Staked tokens are not liquid, making it impossible to use them in traditional DEXes. Though they are transferable to other user's staking IDs, so a DEX could be built on top of this system. This way, liquidity could be provided while still earning staking fees.
+- It is more complex to set up and manage.
 
-The user can generate a soulbound id (nft) which records how much of every resource they have staked and when they have last claimed their staking rewards.
+## License
 
-Then there's a publicly callable method that checks whether a staking period has passed, calculates the amount of rewards that should be handed out per staked token and records that somewhere. 
+The Radix Scrypto Challenges code is released under Radix Modified MIT License.
 
-If the user then comes back a few periods later and calls the method to claim rewards it is calculated how much they are owed and handed to them.
+    Copyright 2024 Radix Publishing Ltd
 
-## DISCLAIMER
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software for non-production informational and educational purposes without
+    restriction, including without limitation the rights to use, copy, modify,
+    merge, publish, distribute, sublicense, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
 
-More documentation will follow.
+    This notice shall be included in all copies or substantial portions of the
+    Software.
 
-No testing or comments are currently present.
+    THE SOFTWARE HAS BEEN CREATED AND IS PROVIDED FOR NON-PRODUCTION, INFORMATIONAL
+    AND EDUCATIONAL PURPOSES ONLY.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+    FOR A PARTICULAR PURPOSE, ERROR-FREE PERFORMANCE AND NONINFRINGEMENT. IN NO
+    EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES,
+    COSTS OR OTHER LIABILITY OF ANY NATURE WHATSOEVER, WHETHER IN AN ACTION OF
+    CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE, MISUSE OR OTHER DEALINGS IN THE SOFTWARE. THE AUTHORS SHALL
+    OWE NO DUTY OF CARE OR FIDUCIARY DUTIES TO USERS OF THE SOFTWARE.
