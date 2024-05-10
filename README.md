@@ -20,9 +20,9 @@ This NFT staking ID approach has some disadvantages over simple OneResourcePool 
 
 ## License
 
-The Radix Scrypto Challenges code is released under Radix Modified MIT License.
+This package is released under modified MIT License.
 
-    Copyright 2024 Radix Publishing Ltd
+    Copyright 2024 Stabilis Labs
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of
     this software and associated documentation files (the "Software"), to deal in
