@@ -17,6 +17,9 @@ This NFT staking ID approach has some disadvantages over simple OneResourcePool 
 - User needs to claim rewards manually. Though this could be automated in some way.
 - Staked tokens are not liquid, making it impossible to use them in traditional DEXes. Though they are transferable to other user's staking IDs, so a DEX could be built on top of this system. This way, liquidity could be provided while still earning staking fees.
 - It is more complex to set up and manage.
+
+DISCLAIMER: USING VECTORS INSTEAD OF SOME OTHER STORAGE LIKE HASHMAPS MIGHT HAVE BEEN A STUPID IDEA. I DID THIS BECAUSE IT WAS EASIER TO CONNECT TO MY FRONT-END HANDLING OF THE API, BUT I SHOULDNT HAVE...
+            FEEL FREE TO REWRITE THIS BLUEPRINT USING HASHMAPS.
 */
 
 use scrypto::prelude::*;
