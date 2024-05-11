@@ -27,7 +27,7 @@ To make it easier to understand, here is a general overview of the blueprint's w
 
 The instantiator of the staking component can add stakable tokens, and set rewards for staking them, or locking them. This information is stored within the staking component.
 
-All staking revolves around the Staking ID. A user can create a staking ID at any time. The ID contains a list of the amount of token a user has staked. A user can stake tokens to it by presenting their ID.
+All staking revolves around the Staking ID. A user can create a staking ID at any time. The ID contains a HashMap, with entries of all staked tokens. The entries contain information about the amount of staked tokens, and until when they are locked. A user can stake tokens to it by presenting their ID.
 
 The staking component records how many tokens are staked in total for all stakable tokens. When a period ends, it calculates how many tokens should be rewarded per staked stakable token for that period. It does this by dividing the total period reward by the total amount staked.
 
