@@ -4,18 +4,13 @@ by Stabilis Labs
 __DISCLAIMER__: THIS PACKAGE HAS NOT BEEN TESTED YET. USE ONLY FOR INSPIRATION NOW.
 
 # Overview
-This blueprint enables advanced staking of resources. Staking rewards are distributed periodically.
+This blueprint enables advanced staking of resources. Staking rewards are distributed periodically. This is done by staking tokens to a Staking ID. This ID records how many tokens are staked, and whether they are locked. By showing this ID, users can stake, unstake, lock their tokens and claim staking rewards.
 
 ### Advantages
 The 3 main advantages over simple OneResourcePool staking that are accomplished are:
 1. Staking reward can be a token different from the staked token.
 2. Staked tokens can be locked (e.g. for voting or to reward not selling).
 3. An unstaking delay can be set (is technically also possible using the OneResourcePool).
-
-To accomplish this, users now stake their tokens to a staking ID. The staked tokens are then held by the staking component:
-1. Rewards are claimed through the component, which can distribute any token as a reward.
-2. The component can easily lock these tokens.
-3. Unstaking is done by requesting an unstaking receipt, which can be redeemed through the component after a set delay, providing an unstaking delay.
 
 ### Disadvantages
 This NFT staking ID approach has some disadvantages over simple OneResourcePool staking:
