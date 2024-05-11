@@ -14,7 +14,7 @@ To accomplish this, users now stake their tokens to a staking ID. The staked tok
 
 ### Disadvantages
 This NFT staking ID approach has some disadvantages over simple OneResourcePool staking:
-- Wallet display of staked tokens is more difficult, as staked amounts are stored by an NFT (staking ID). Ideally, users need to use some kind of front-end to see their staked tokens.
+- Wallet display of staked tokens is more difficult, as staked amounts are stored by an NFT (staking ID). Ideally, users need to use some kind of front-end to see their staked tokens. Alternatively, you could provide the staker with a placeholder token, so they can easily see how much they've staked.
 - Staking rewards are distributed periodically, not continuously.
 - User needs to claim rewards manually. Though this could be automated in some way.
 - Staked tokens are not liquid, making it impossible to use them in traditional DEXes. Though they are transferable to other user's staking IDs, so a DEX could be built on top of this system. This way, liquidity could be provided while still earning staking fees.
