@@ -1,10 +1,13 @@
-## DISCLAIMER
+# Scrypto Advanced Staking
+by Stabilis Labs
+
+# DISCLAIMER
 This package has not been tested yet. Use only for inspiration for now.
 
-## Overview
+# Overview
 This blueprint enables advanced staking of resources. Staking rewards are distributed periodically.
 
-### Advantages
+## Advantages
 The 3 main advantages over simple OneResourcePool staking that are accomplished are:
 1. Staking reward can be a token different from the staked token.
 2. Staked tokens can be locked (e.g. for voting or to reward not selling).
@@ -15,7 +18,7 @@ To accomplish this, users now stake their tokens to a staking ID. The staked tok
 2. The component can easily lock these tokens.
 3. Unstaking is done by requesting an unstaking receipt, which can be redeemed through the component after a set delay, providing an unstaking delay.
 
-### Disadvantages
+## Disadvantages
 This NFT staking ID approach has some disadvantages over simple OneResourcePool staking:
 1. Wallet display of staked tokens is more difficult, as staked amounts are stored by an NFT (staking ID). Ideally, users need to use some kind of front-end to see their staked tokens. Alternatively, you could provide the staker with a placeholder token, so they can easily see how much they've staked.
 2. Staking rewards are distributed periodically, not continuously.
@@ -23,13 +26,14 @@ This NFT staking ID approach has some disadvantages over simple OneResourcePool 
 4. Staked tokens are not liquid, making it impossible to use them in traditional DEXes. Though they are transferable to other user's staking IDs, so a DEX could be built on top of this system. This way, liquidity could be provided while still earning staking fees.
 5. It is more complex to set up and manage.
 
-## Implementation
-__Required knowledge:__
+# Implementation
+
+## Required knowledge
 To set up a staking component, you will need to know how to build (for now, since no package is deployed already) and deploy scrypto packages and write and send transaction manifests. In the future, information on how to do this will be available here. For now, please refer to Radix' documentation: https://docs.radixdlt.com/docs
 
 Though, if you have trouble with writing Transaction Manifests, using https://instruct-stokenet.radixbillboard.com/ is heavily recommended! It will automatically detect what arguments a chosen method expects.
 
-__Setup:__
+## Setup
 Setting up a staking component is fairly easy. First, clone this repo and build the package, and deploy it to ledger (in the future, a package will be deployed on main net and stokenet already for you to use).
 
 ### Instantiation
