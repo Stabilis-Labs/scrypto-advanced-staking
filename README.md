@@ -88,7 +88,7 @@ pub struct Lock {
 - The duration argument is the amount of days the stake will be locked
 
 ### Creating a staking ID
-To stake, a user needs to create a staking ID
+To stake, a user needs to create a staking ID by calling the ``create_id`` method.
 
 ## License
 
