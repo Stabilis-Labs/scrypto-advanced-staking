@@ -371,7 +371,7 @@ mod staking {
             resource_map.insert(address, resource);
 
             self.id_manager
-                .update_non_fungible_data(&id, "amounts_staked", resource_map);
+                .update_non_fungible_data(&id, "resources", resource_map);
 
             if stake_transfer {
                 let stake_transfer_receipt = StakeTransferReceipt {
@@ -487,7 +487,7 @@ mod staking {
             let id = id_proof.non_fungible::<Id>().local_id().clone();
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
             assert!(
-                id_data.next_period >= self.current_period,
+                id_data.next_period > self.current_period,
                 "Please claim unclaimed rewards on your ID before staking."
             );
 
