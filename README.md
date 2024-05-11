@@ -1,8 +1,6 @@
 # Scrypto Advanced Staking
 by Stabilis Labs
-
-# DISCLAIMER
-This package has not been tested yet. Use only for inspiration for now.
+__DISCLAIMER__: THIS PACKAGE HAS NOT BEEN TESTED YET. USE ONLY FOR INSPIRATION NOW.
 
 # Overview
 This blueprint enables advanced staking of resources. Staking rewards are distributed periodically.
