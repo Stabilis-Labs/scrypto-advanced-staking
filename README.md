@@ -24,21 +24,6 @@ This NFT staking ID approach has some disadvantages over simple OneResourcePool 
 5. It is more complex to set up and manage.
 
 ## Implementation
-Within the lib.rs file, you will find all methods with accompanying comments.
-
-To make it easier to understand, here is a general overview of the blueprint's working:
-
-The instantiator of the staking component can add stakable tokens, and set rewards for staking them, or locking them. This information is stored within the staking component.
-
-All staking revolves around the Staking ID. A user can create a staking ID at any time. The ID contains a HashMap, with entries of all staked tokens. The entries contain information about the amount of staked tokens, and until when they are locked. A user can stake tokens to it by presenting their ID.
-
-The staking component records how many tokens are staked in total for all stakable tokens. When a period ends, it calculates how many tokens should be rewarded per staked stakable token for that period. It does this by dividing the total period reward by the total amount staked.
-
-A user can then come back and claim their staking rewards for the periods that have passed since they have last done so. To do this, they present their staking ID.
-
-Provided the tokens aren't locked, unstaking is done by again presenting the staking ID. This results in an unstaking receipt, which can, after the unstaking delay has passed, be redeemed for the unstaked tokens.
-
-## Setup
 __Required knowledge:__
 To set up a staking component, you will need to know how to build (for now, since no package is deployed already) and deploy scrypto packages and write and send transaction manifests. In the future, information on how to do this will be available here. For now, please refer to Radix' documentation: https://docs.radixdlt.com/docs
 
