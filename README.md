@@ -1,5 +1,6 @@
 # Scrypto Advanced Staking
 by Stabilis Labs
+
 __DISCLAIMER__: THIS PACKAGE HAS NOT BEEN TESTED YET. USE ONLY FOR INSPIRATION NOW.
 
 # Overview
