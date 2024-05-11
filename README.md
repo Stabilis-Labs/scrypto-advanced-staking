@@ -6,7 +6,7 @@ __DISCLAIMER__: THIS PACKAGE HAS NOT BEEN TESTED YET. USE ONLY FOR INSPIRATION N
 # Overview
 This blueprint enables advanced staking of resources. Staking rewards are distributed periodically.
 
-## Advantages
+### Advantages
 The 3 main advantages over simple OneResourcePool staking that are accomplished are:
 1. Staking reward can be a token different from the staked token.
 2. Staked tokens can be locked (e.g. for voting or to reward not selling).
@@ -17,7 +17,7 @@ To accomplish this, users now stake their tokens to a staking ID. The staked tok
 2. The component can easily lock these tokens.
 3. Unstaking is done by requesting an unstaking receipt, which can be redeemed through the component after a set delay, providing an unstaking delay.
 
-## Disadvantages
+### Disadvantages
 This NFT staking ID approach has some disadvantages over simple OneResourcePool staking:
 1. Wallet display of staked tokens is more difficult, as staked amounts are stored by an NFT (staking ID). Ideally, users need to use some kind of front-end to see their staked tokens. Alternatively, you could provide the staker with a placeholder token, so they can easily see how much they've staked.
 2. Staking rewards are distributed periodically, not continuously.
