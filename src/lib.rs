@@ -534,12 +534,14 @@ mod staking {
         // - the claimed rewards
         //
         // ## LOGIC
+        // - the method updates the component period if necessary
         // - the method checks the staking ID
         // - the method checks amount of unclaimed periods
         // - the method iterates over all staked tokens and calculates the rewards
         // - the method updates the staking ID to the next period
         // - the method returns the claimed rewards
         pub fn update_id(&mut self, id_proof: NonFungibleProof) -> FungibleBucket {
+            self.update_period();
             let id_proof =
                 id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
             let id = id_proof.non_fungible::<Id>().local_id().clone();
