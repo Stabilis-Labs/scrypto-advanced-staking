@@ -39,13 +39,9 @@ pub struct UnstakeReceipt {
 #[derive(ScryptoSbor, NonFungibleData)]
 pub struct Id {
     #[mutable]
-    pub amounts_staked: Vec<Decimal>,
-    #[mutable]
-    pub amounts_locked: Vec<Decimal>,
+    pub resources: HashMap<ResourceAddress, Resource>,
     #[mutable]
     pub next_period: i64,
-    #[mutable]
-    pub locked_until: Vec<Option<Instant>>,
 }
 
 // Lock structure, holding the information about locking options of a token.
@@ -55,11 +51,17 @@ pub struct Lock {
     pub duration: i64,
 }
 
+#[derive(ScryptoSbor, Clone)]
+pub struct Resource {
+    pub amount_staked: Decimal,
+    pub locked_until: Option<Instant>,
+}
+
 // Stakable unit structure, used by the component to data about a stakable token.
 #[derive(ScryptoSbor)]
 pub struct StakableUnit {
     pub address: ResourceAddress,
-    pub staked_amount: Decimal,
+    pub amount_staked: Decimal,
     pub vault: Vault,
     pub reward_amount: Decimal,
     pub lock: Lock,
@@ -125,9 +127,7 @@ mod staking {
         // vault that stores staking rewards
         reward_vault: FungibleVault,
         // keyvaluestore, holding stakable units and their data
-        stakes: KeyValueStore<ResourceAddress, StakableUnit>,
-        // vector of stakable tokens
-        stakables: Vec<ResourceAddress>,
+        stakes: HashMap<ResourceAddress, StakableUnit>,
         // whether a DAO is controlling the staking
         // If a centralized entity controls the controller badge, using the set_lock method, they could lock the someone's tokens by telling the system someone is voting.
         // To prevent this, this functionality only enabled if dao_controlled is set to true.
@@ -260,8 +260,7 @@ mod staking {
                 unstake_receipt_counter: 0,
                 id_counter: 0,
                 reward_vault: FungibleVault::with_bucket(rewards.as_fungible()),
-                stakes: KeyValueStore::new(),
-                stakables: vec![],
+                stakes: HashMap::new(),
                 dao_controlled,
             }
             .instantiate()
@@ -295,12 +294,11 @@ mod staking {
             let extra_periods: i64 = i64::try_from(extra_periods_dec.0 / Decimal::ONE.0).unwrap();
 
             if Clock::current_time_is_at_or_after(self.next_period, TimePrecision::Minute) {
-                for stakable in self.stakables.iter() {
-                    let stakable_unit = self.stakes.get_mut(stakable).unwrap();
-                    if stakable_unit.staked_amount > dec!(0) {
+                for (_address, stakable_unit) in self.stakes.iter_mut() {
+                    if stakable_unit.amount_staked > dec!(0) {
                         stakable_unit.rewards.insert(
                             self.current_period,
-                            stakable_unit.reward_amount / stakable_unit.staked_amount,
+                            stakable_unit.reward_amount / stakable_unit.amount_staked,
                         );
                     } else {
                         stakable_unit.rewards.insert(self.current_period, dec!(0));
@@ -319,8 +317,7 @@ mod staking {
         // ## INPUT
         // - `id_proof`: the proof of the staking ID
         // - `address`: the address of the stakable token
-        // - `unstake_amount`: the amount of tokens to unstake
-        // - `unstake_all`: whether to unstake all tokens (useful to ensure no dust is leftover)
+        // - `amount`: the amount of tokens to unstake
         // - `stake_transfer`: whether to transfer the staked tokens to another user
         //
         // ## OUTPUT
@@ -330,65 +327,59 @@ mod staking {
         // - the method checks the staking ID
         // - the method checks the staked amount
         // - the method checks if the staked tokens are locked (then unstaking is not possible)
-        // - if not tokens are removed from staking ID stake
+        // - if not, tokens are removed from staking ID stake
         // - if the user wants to transfer the tokens, a transfer receipt is minted
         // - if the user wants to unstake the tokens, an unstake receipt is minted
         pub fn start_unstake(
             &mut self,
             id_proof: NonFungibleProof,
             address: ResourceAddress,
-            unstake_amount: Decimal,
-            unstake_all: bool,
+            amount: Decimal,
             stake_transfer: bool,
         ) -> Bucket {
             let id_proof =
                 id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
 
             let id = id_proof.non_fungible::<Id>().local_id().clone();
-
-            self.check_indexes(&id);
-
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
-            let index = self.stakables.iter().position(|&r| r == address).unwrap();
-            let mut staked_vector: Vec<Decimal> = id_data.amounts_staked.clone();
-            let locked_vector: Vec<Option<Instant>> = id_data.locked_until.clone();
+
+            let mut unstake_amount: Decimal = amount;
+            let mut resource_map = id_data.resources.clone();
+            let mut resource = resource_map
+                .get(&address)
+                .expect("Stakable not found in staking ID.")
+                .clone();
 
             assert!(
-                staked_vector[index] > dec!(0),
+                resource.amount_staked > dec!(0),
                 "No stake available to unstake."
             );
 
-            if locked_vector[index].is_some() {
+            if let Some(locked_until) = resource.locked_until {
                 assert!(
-                    Clock::current_time_is_at_or_after(
-                        locked_vector[index].unwrap(),
-                        TimePrecision::Minute
-                    ),
+                    Clock::current_time_is_at_or_after(locked_until, TimePrecision::Minute),
                     "You cannot unstake tokens currently participating in a vote."
                 );
             }
 
-            let mut amount: Decimal = match unstake_all {
-                true => staked_vector[index],
-                false => unstake_amount,
-            };
-
-            if amount >= staked_vector[index] {
-                self.stakes.get_mut(&address).unwrap().staked_amount -= staked_vector[index];
-                amount = staked_vector[index];
-                staked_vector[index] = dec!(0);
+            if amount >= resource.amount_staked {
+                unstake_amount = resource.amount_staked;
+                resource.amount_staked = dec!(0);
             } else {
-                self.stakes.get_mut(&address).unwrap().staked_amount -= amount;
-                staked_vector[index] -= amount;
+                resource.amount_staked -= amount;
             }
 
+            self.stakes.get_mut(&address).unwrap().amount_staked -= resource.amount_staked;
+
+            resource_map.insert(address, resource);
+
             self.id_manager
-                .update_non_fungible_data(&id, "amounts_staked", staked_vector);
+                .update_non_fungible_data(&id, "amounts_staked", resource_map);
 
             if stake_transfer {
                 let stake_transfer_receipt = StakeTransferReceipt {
                     address,
-                    amount,
+                    amount: unstake_amount,
                 };
                 self.stake_transfer_receipt_counter += 1;
                 self.stake_transfer_receipt_manager.mint_non_fungible(
@@ -398,7 +389,7 @@ mod staking {
             } else {
                 let unstake_receipt = UnstakeReceipt {
                     address,
-                    amount,
+                    amount: unstake_amount,
                     redemption_time: Clock::current_time_rounded_to_minutes()
                         .add_days(self.unstake_delay)
                         .unwrap(),
@@ -465,10 +456,8 @@ mod staking {
             self.id_counter += 1;
 
             let id_data = Id {
-                amounts_staked: vec![dec!(0); self.stakables.len()],
-                amounts_locked: vec![dec!(0); self.stakables.len()],
+                resources: HashMap::new(),
                 next_period: self.current_period + 1,
-                locked_until: vec![None; self.stakables.len()],
             };
 
             let id: Bucket = self
@@ -492,48 +481,42 @@ mod staking {
         // ## LOGIC
         // - the method checks the staking ID
         // - the method checks if latest rewards have been claimed, if not, the method fails
-        // - the method checks the to be staked tokens, adds it to the to be staked amount, adds tokens to stake vault
-        // - the method checks the to be staked transfer receipt, adds it to the to be staked amount, burns transfer receipt
+        // - the method checks whether it received tokens or a transfer receipt
+        // - the method adds tokens to an internal vault, or burns the transfer receipt
         // - the method updates the staking ID
-        pub fn stake(&mut self, address: ResourceAddress, stake_bucket: Option<Bucket>, id_proof: NonFungibleProof, stake_transfer_receipt: Option<NonFungibleBucket>) {
+        pub fn stake(&mut self, stake_bucket: Bucket, id_proof: NonFungibleProof) {
             let id_proof =
                 id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
             let id = id_proof.non_fungible::<Id>().local_id().clone();
-            self.check_indexes(&id);
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
-            let index = self.stakables.iter().position(|&r| r == address).unwrap();
-            let mut staked_vector: Vec<Decimal> = id_data.amounts_staked.clone();
-            let mut stake_amount: Decimal = dec!(0);
             assert!(
                 id_data.next_period >= self.current_period,
                 "Please claim unclaimed rewards on your ID before staking."
             );
-            assert!(self.stakables.contains(&address), "This requested token is not stakable.");
 
-            if let Some(bucket) = stake_bucket {
-                assert!(bucket.resource_address() == address, "Token supplied does not match requested stakable token.");
-                stake_amount += bucket.amount();
-                self.stakes
-                    .get_mut(&address)
-                    .unwrap()
-                    .vault
-                    .put(bucket);
+            let stake_amount: Decimal;
+            let address: ResourceAddress;
+
+            if stake_bucket.resource_address() == self.stake_transfer_receipt_manager.address() {
+                (stake_amount, address) = self.stake_transfer_receipt(stake_bucket.as_non_fungible());
+            } else {
+                (stake_amount, address) = self.stake_tokens(stake_bucket);
             }
 
-            if let Some(receipt) = stake_transfer_receipt {
-                assert!(receipt.resource_address() == self.stake_transfer_receipt_manager.address(), "Wrong stake transfer receipt supplied.");
-                let receipt_data = receipt.non_fungible::<StakeTransferReceipt>().data();
-                assert!(receipt_data.address == address, "Token found in stake transfer receipt does not match requested stakable token.");
-                stake_amount += receipt_data.amount;
-                receipt.burn();
-            }
-
-            staked_vector[index] += stake_amount;
+            let mut resource_map = id_data.resources.clone();
+            resource_map.entry(address)
+                .and_modify(|resource| {
+                    resource.amount_staked += stake_amount;
+                })
+                .or_insert(Resource {
+                    amount_staked: stake_amount,
+                    locked_until: None,
+                });
 
             self.id_manager
-                .update_non_fungible_data(&id, "amounts_staked", staked_vector);
+                .update_non_fungible_data(&id, "resources", resource_map);
 
-            self.stakes.get_mut(&address).unwrap().staked_amount += stake_amount;
+            self.stakes.get_mut(&address).unwrap().amount_staked += stake_amount;
 
             self.id_manager.update_non_fungible_data(
                 &id,
@@ -560,10 +543,7 @@ mod staking {
             let id_proof =
                 id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
             let id = id_proof.non_fungible::<Id>().local_id().clone();
-            self.check_indexes(&id);
-
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
-            let staked_vector: Vec<Decimal> = id_data.amounts_staked.clone();
 
             let mut claimed_weeks: i64 = self.current_period - id_data.next_period + 1;
             if claimed_weeks > self.max_claim_delay {
@@ -577,8 +557,7 @@ mod staking {
             self.id_manager
                 .update_non_fungible_data(&id, "next_period", self.current_period + 1);
 
-            for (index, stakable) in self.stakables.iter().enumerate() {
-                let stakable_unit = self.stakes.get_mut(stakable).unwrap();
+            for (address, stakable_unit) in self.stakes.iter() {
                 for week in 1..(claimed_weeks + 1) {
                     if stakable_unit
                         .rewards
@@ -589,7 +568,10 @@ mod staking {
                             .rewards
                             .get(&(self.current_period - week))
                             .unwrap()
-                            * staked_vector[index]
+                            * id_data
+                                .resources
+                                .get(&address)
+                                .map_or(dec!(0), |resource| resource.amount_staked);
                     }
                 }
             }
@@ -608,35 +590,39 @@ mod staking {
         //
         // ## LOGIC
         // - the method checks the staking ID
-        // - the method checks the stakables for a matching address
+        // - the method checks whether this resource address is lockable
         // - the method checks whether the staking ID tokens are already locked
         // - the method locks the tokens by updating the staking ID
         // - the method returns the rewards for locking the tokens
 
 
-        pub fn lock_stake(&mut self, address: ResourceAddress, id_proof: NonFungibleProof) -> Bucket {
+        pub fn lock_stake(&mut self, address: ResourceAddress, id_proof: NonFungibleProof) -> FungibleBucket {
             let id_proof =
                 id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
             let id = id_proof.non_fungible::<Id>().local_id().clone();
-
-            self.check_indexes(&id);
-            let index = self.stakables.iter().position(|&r| r == address).expect("Stakable not found.");
             let stakable = self.stakes.get(&address).unwrap();
 
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
-            let staked_amount: Decimal = id_data.amounts_staked[index];        
-            let mut locked_vector: Vec<Option<Instant>> = id_data.locked_until.clone();          
-            if locked_vector[index].is_some() {
-                assert!(Clock::current_time_is_at_or_after(locked_vector[index].unwrap(), TimePrecision::Minute), "Tokens are already locked.");
+            let mut resource_map = id_data.resources.clone();
+            let mut resource = resource_map
+                .get(&address)
+                .expect("Stakable not found in staking ID.")
+                .clone();
+
+            let amount_staked = resource.amount_staked;
+       
+            if let Some(locked_until) = resource.locked_until {
+                assert!(Clock::current_time_is_at_or_after(locked_until, TimePrecision::Minute), "Tokens are already locked.");
             }
 
-            let lock_until: Instant = Clock::current_time_rounded_to_minutes().add_days(stakable.lock.duration).unwrap();      
-            locked_vector[index] = Some(lock_until);
+            let lock_until: Instant = Clock::current_time_rounded_to_minutes().add_days(stakable.lock.duration).unwrap();                 
+            resource.locked_until = Some(lock_until);
+            resource_map.insert(address, resource);
 
             self.id_manager
-                .update_non_fungible_data(&id, "locked_until", locked_vector);
+                .update_non_fungible_data(&id, "resources", resource_map);
 
-            self.reward_vault.take(stakable.lock.payment * staked_amount).into()
+            self.reward_vault.take(stakable.lock.payment * amount_staked)
         }
 
         //////////////////////////////////////////////////////////////////////
@@ -673,19 +659,17 @@ mod staking {
                 address,
                 StakableUnit {
                     address,
-                    staked_amount: dec!(0),
+                    amount_staked: dec!(0),
                     vault: Vault::new(address),
                     reward_amount,
                     lock,
                     rewards: KeyValueStore::new(),
                 },
             );
-
-            self.stakables.push(address);
         }
 
         pub fn edit_stakable(&mut self, address: ResourceAddress, reward_amount: Decimal, lock: Lock) {
-            let mut stakable = self.stakes.get_mut(&address).unwrap();
+            let stakable = self.stakes.get_mut(&address).unwrap();
             stakable.reward_amount = reward_amount;
             stakable.lock = lock;
         }
@@ -705,59 +689,78 @@ mod staking {
         // - none
         //
         // ## LOGIC
-        // - the method checks the staking ID
+        // - the method checks whether a DAO is controlling the staking
         // - the method updates the locked_until field of the staking ID appropriately
         
         pub fn set_lock(&mut self, address: ResourceAddress, lock_until: Instant, id: NonFungibleLocalId) {
             assert!(self.dao_controlled == true, "This functionality is only available if a DAO is controlling the staking.");
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
-            let index = self.stakables.iter().position(|&r| r == address).unwrap();
-            let mut locked_vector: Vec<Option<Instant>> = id_data.locked_until.clone();
-            locked_vector[index] = Some(lock_until);
+
+            let mut resource_map = id_data.resources.clone();
+            let mut resource = resource_map
+                .get(&address)
+                .expect("Stakable not found in staking ID.")
+                .clone();
+               
+            resource.locked_until = Some(lock_until);
+            resource_map.insert(address, resource);
 
             self.id_manager
-                .update_non_fungible_data(&id, "locked_until", locked_vector);
+                .update_non_fungible_data(&id, "resources", resource_map);
         }
 
         //////////////////////////////////////////////////////////////////////
         ////////////////////////////HELPER METHODS////////////////////////////
         //////////////////////////////////////////////////////////////////////
 
-        // This method checks the indexes of the staking ID, adding new indexes if necessary. Useful if new stakables are added since the staking ID was created / last used.
-        //
-        // ## INPUT
-        // - `id`: the staking ID
-        //
-        // ## OUTPUT
-        // - none
-        //
-        // ## LOGIC
-        // - the method updates the period if necessary, so the next period and rewwards are always up to date
-        // - the method checks the staking ID
-        // - the method checks the stakables
-        // - the method adds new indexes if necessary
+        /// This method counts the staked tokens and puts them away in the staking component's vault.
+        /// 
+        /// ## INPUT
+        /// - `stake_bucket`: the bucket of staked tokens
+        ///
+        /// ## OUTPUT
+        /// - the amount of staked tokens
+        /// - the address of the stakable token
+        /// 
+        /// ## LOGIC
+        /// - the method checks whether the staked token is a stakable token
+        /// - the method puts the staked tokens in the staking component's vault
+        /// - the method returns the amount of staked tokens and the address of the stakable token
 
-        fn check_indexes(&mut self, id: &NonFungibleLocalId) {
-            if Clock::current_time_is_at_or_after(self.next_period, TimePrecision::Minute) {
-                self.update_period();
-            }
-            let id_data: Id = self.id_manager.get_non_fungible_data(id);
-            let mut staked_vector: Vec<Decimal> = id_data.amounts_staked.clone();
-            let mut locked_vector: Vec<Option<Instant>> = id_data.locked_until.clone();
+        fn stake_tokens(&mut self, stake_bucket: Bucket) -> (Decimal, ResourceAddress) {   
+            let address: ResourceAddress = stake_bucket.resource_address();
+            assert!(self.stakes.get(&address).is_some(), "Token supplied does not match requested stakable token.");
+            let stake_amount: Decimal = stake_bucket.amount();
+            self.stakes
+                .get_mut(&address)
+                .unwrap()
+                .vault
+                .put(stake_bucket);
 
-            if staked_vector.len() != self.stakables.len() {
-                let to_add_items = self.stakables.len() - staked_vector.len();
-                let to_add_vector = vec![dec!(0); to_add_items];
-                let to_add_locked_vector: Vec<Option<Instant>> = vec![None; to_add_items];
-                staked_vector.extend(to_add_vector.clone());
-                locked_vector.extend(to_add_locked_vector.clone());
-
-                self.id_manager
-                    .update_non_fungible_data(id, "amounts_staked", staked_vector);
-
-                self.id_manager
-                    .update_non_fungible_data(id, "locked_until", locked_vector);
-            }
+            (stake_amount, address)
         }
+
+        /// This method counts the staked tokens from a transfer receipt and burns it.
+        /// 
+        /// ## INPUT
+        /// - `receipt`: the transfer receipt
+        ///
+        /// ## OUTPUT
+        /// - the amount of staked tokens
+        /// - the address of the stakable token
+        /// 
+        /// ## LOGIC
+        /// - the method extracts the data from the receipt
+        /// - the method burns the receipt
+        /// - the method returns the amount of staked tokens and the address of the stakable token
+        
+        fn stake_transfer_receipt(&mut self, receipt: NonFungibleBucket) -> (Decimal, ResourceAddress) {
+                let receipt_data = receipt.non_fungible::<StakeTransferReceipt>().data();
+                let address: ResourceAddress = receipt_data.address;
+                let stake_amount: Decimal = receipt_data.amount;
+                receipt.burn();
+
+                (stake_amount, address)
+            }
     }
 }
