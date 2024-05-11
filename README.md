@@ -28,7 +28,7 @@ To set up a staking component, you will need to know how to build (for now, sinc
 Though, if you have trouble with writing Transaction Manifests, using https://instruct-stokenet.radixbillboard.com/ is heavily recommended! It will automatically detect what arguments a chosen method expects.
 
 ## Setup
-Setting up a staking component is fairly easy. First, clone this repo and build the package, and deploy it to ledger (in the future, a package will be deployed on main net and stokenet already for you to use).
+Setting up a staking component is fairly easy. First, clone this repo, build the package, and deploy it to ledger (in the future, a package will be deployed on main net and stokenet already for you to use).
 
 ### Instantiation
 Now the package is deployed to ledger, it's time to instantiate your own Staking component by calling the ``new`` function, which looks like this:
