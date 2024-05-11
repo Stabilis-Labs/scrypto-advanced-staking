@@ -1,7 +1,7 @@
 # Scrypto Advanced Staking
 by Stabilis Labs
 
-__DISCLAIMER__: THIS PACKAGE HAS NOT BEEN TESTED YET. USE ONLY FOR INSPIRATION NOW.
+__DISCLAIMER__: THIS PACKAGE HAS NOT BEEN THOROUGHLY TESTED YET. USE ONLY FOR INSPIRATION NOW.
 
 # Overview
 This package enables advanced staking of resources. This is done by staking tokens to a Staking ID. This ID records how many tokens are staked, and whether they are locked. By showing this ID, users can stake, unstake, lock their tokens and claim staking rewards. Assignment of rewards is done periodically.
