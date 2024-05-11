@@ -145,6 +145,9 @@ __IMPORTANT__: The ``max_claim_delay`` parameter of the system determines the am
 ### Admin methods
 To update the system, a plethora of admin methods exists . Please refer to the blueprint for these. They are very simple, but all require proof of the owner badge, so be sure to include this in the manifest.
 
+## Contributions
+This package is far from perfect, so all contributions are welcome! If you want your contribution to be review asap, contact @octopusxrd on Telegram.
+
 ## License
 
 This package is released under modified MIT License.
