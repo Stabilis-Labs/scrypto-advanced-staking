@@ -145,7 +145,7 @@ pub fn update_id(&mut self, id_proof: NonFungibleProof) -> FungibleBucket
 __IMPORTANT__: The ``max_claim_delay`` parameter of the system determines the amount of previous periods you can still claim rewards from. By default, it's set to 5, but it can be altered by the component owner.
 
 ### Admin methods
-A plethora of admin methods exist to update the system. Please refer to the blueprint for these. They are very simple, but all require proof of the owner badge, so be sure to include this in the manifest.
+To update the system, a plethora of admin methods exists . Please refer to the blueprint for these. They are very simple, but all require proof of the owner badge, so be sure to include this in the manifest.
 
 ## License
 
