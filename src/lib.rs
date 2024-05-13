@@ -476,15 +476,25 @@ mod staking {
         // - none
         //
         // ## LOGIC
+        // - the method checks whether a staking ID is supplied, if not, it creates one
         // - the method checks the staking ID
         // - the method checks if latest rewards have been claimed, if not, the method fails
         // - the method checks whether it received tokens or a transfer receipt
         // - the method adds tokens to an internal vault, or burns the transfer receipt
         // - the method updates the staking ID
-        pub fn stake(&mut self, stake_bucket: Bucket, id_proof: NonFungibleProof) {
-            let id_proof =
-                id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
-            let id = id_proof.non_fungible::<Id>().local_id().clone();
+        pub fn stake(&mut self, stake_bucket: Bucket, id_proof: Option<Proof>) -> Option<Bucket> {
+            let id: NonFungibleLocalId;
+            let id_bucket: Option<Bucket> = None;
+
+            if let Some(id_proof) = id_proof {
+                let id_proof =
+                    id_proof.check_with_message(self.id_manager.address(), "Invalid Id supplied!");
+                id = id_proof.as_non_fungible().non_fungible::<Id>().local_id().clone();
+            } else {
+                let id_bucket = self.create_id();
+                id = id_bucket.as_non_fungible().non_fungible::<Id>().local_id().clone();
+            }
+
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
             assert!(
                 id_data.next_period > self.current_period,
@@ -520,6 +530,8 @@ mod staking {
                 "next_period",
                 self.current_period + 1,
             );
+
+            id_bucket
         }
 
         // This method claims rewards from a staking ID
