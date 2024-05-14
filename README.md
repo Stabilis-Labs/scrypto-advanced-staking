@@ -81,11 +81,12 @@ To stake, a user needs to create a staking ID by calling the ``create_id`` metho
 To stake to a Staking ID, the ``stake`` method is called, which looks like:
 
 ```rust
-pub fn stake(&mut self, stake_bucket: Bucket, id_proof: NonFungibleProof)
+pub fn stake(&mut self, stake_bucket: Bucket, id_proof: Option<NonFungibleProof>) -> Option<Bucket>
 ```
 
 - The ``stake_bucket`` argument is a bucket of either the stakable tokens, or a stake transfer receipt (which is a receipt that can be used to transfer stake from one ID to another)
-- The ``id_proof`` argument is a NonFungibleProof of the Staking ID, to prove the user is in possession of it.
+- The ``id_proof`` argument is Some(NonFungibleProof) of the Staking ID, to prove the user is in possession of it. If None is passed, a Staking ID is created for the user.
+- If no proof of a Staking ID is supplied, a newly created Staking ID is returned.
 
 ### Unstaking
 Unstaking consists of two steps:
