@@ -704,7 +704,7 @@ mod staking {
         // - the method updates the locked_until field of the staking ID appropriately
         
         pub fn set_lock(&mut self, address: ResourceAddress, lock_until: Instant, id: NonFungibleLocalId) {
-            assert!(self.dao_controlled == true, "This functionality is only available if a DAO is controlling the staking.");
+            assert!(self.dao_controlled, "This functionality is only available if a DAO is controlling the staking.");
             let id_data: Id = self.id_manager.get_non_fungible_data(&id);
 
             let mut resource_map = id_data.resources.clone();
